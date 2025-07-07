@@ -17,8 +17,8 @@ import java.util.UUID;
 @Service
 public class OrderServiceImpl implements OrderService {
 
-    private OrderRepository orderRepository;
-    private PaymentRepository paymentRepository;
+    private final OrderRepository orderRepository;
+    private final PaymentRepository paymentRepository;
 
     public OrderServiceImpl(OrderRepository orderRepository, PaymentRepository paymentRepository) {
         this.orderRepository = orderRepository;
@@ -36,7 +36,7 @@ public class OrderServiceImpl implements OrderService {
 
         Payment payment = orderRequest.getPayment();
 
-        if(!payment.getType().equals("DEBIT")){
+        if(!"DEBIT".equals(payment.getType())) {
             throw new PaymentException("Payment card type do not support");
         }
 

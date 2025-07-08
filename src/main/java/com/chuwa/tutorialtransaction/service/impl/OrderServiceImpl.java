@@ -11,6 +11,7 @@ import com.chuwa.tutorialtransaction.repository.PaymentRepository;
 import com.chuwa.tutorialtransaction.service.OrderService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
 import java.util.UUID;
 
@@ -26,22 +27,22 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public OrderResponse placeOrder(OrderRequest orderRequest) {
 
         Order order = orderRequest.getOrder();
+        Payment payment = orderRequest.getPayment();
         order.setStatus("INPROGRESS");
         order.setOrderTackingNumber(UUID.randomUUID().toString());
-        orderRepository.save(order);
-
-        Payment payment = orderRequest.getPayment();
 
         if(!"DEBIT".equals(payment.getType())) {
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();//Limit current transaction to rollback-only status, current transaction will NOT commit regardless of exception or not
             throw new PaymentException("Payment card type do not support");
         }
 
         payment.setOrderId(order.getId());
         paymentRepository.save(payment);
+        orderRepository.save(order);
 
         OrderResponse orderResponse = new OrderResponse();
         orderResponse.setOrderTackingNumber(order.getOrderTackingNumber());
